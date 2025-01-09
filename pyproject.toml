@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "associate examples"
+version = "0.1.0"
+description = ""
+authors = ["NatalieC2k <nataliec2k5@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+openai = "^1.58.1"
+urllib3 = "^2.3.0"
+lxml = "^5.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
