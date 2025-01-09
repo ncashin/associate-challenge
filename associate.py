@@ -17,34 +17,30 @@ input = "Change the name in all documents to “Amy Alpha” and adjust her sala
 
 assistant = client.beta.assistants.create(
     name="Legal Assistant",
-    instructions="""
-    Instructions:
-        - ensure first names are accounted for be consistent when changing names
-    Goal:
-        - Perform task assigned by input prompt
-    """,
+    instructions="you are legal assistant think things through",
     temperature=0,
     model="gpt-4o",
     tools=[
         {"type": "file_search"},
+
         {
             "type": "function",
             "function": {
-                "name": "replace_text",
-                "description": "Replace specific text you give me in document",
+                "name": "change_text",
+                "description": "change text in document",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "text_to_replace": {
+                        "text_in_document": {
                             "type": "string",
-                            "description": "Text to be replaced"
+                            "description": "text currently in document that should be changed"
                         },
-                        "replacement_text": {
+                        "text_to_change_to": {
                             "type": "string",
-                            "description": "Text as replacement for text_to_replace"
+                            "description": "text text_in_document should be changed to"
                         }
                     },
-                    "required": ["text_to_replace", "replacement_text"],
+                    "required": ["text_in_document", "text_to_change_to"],
                 },
             },
         },
@@ -77,11 +73,25 @@ for filename in files:
     intermediary_file.close()
 
 
+def change_name(current_text: str, arguments):
+    name_to_change = arguments["name_to_change"]
+    name_to_change_to = arguments["name_to_change_to"]
+    print(f"\nchanging name \"{name_to_change}\" -> \"{name_to_change_to}\"")
+
+    i = 0
+    for name in name_to_change.split(' '):
+        pattern = re.compile(name, re.IGNORECASE)
+        current_text = pattern.sub(name_to_change_to.split(' ')[i], current_text)
+        i += 1
+    return current_text
+
 def change_text(current_text: str, arguments):
-    to_replace = arguments["text_to_replace"]
-    replacement = arguments["replacement_text"]
-    pattern = re.compile(to_replace, re.IGNORECASE)
-    return pattern.sub(replacement, current_text)
+    text_in_document = arguments["text_in_document"]
+    text_to_change_to = arguments["text_to_change_to"]
+    print(f"\nchanging text \"{text_in_document}\" -> \"{text_to_change_to}\"")
+
+    pattern = re.compile(text_in_document, re.IGNORECASE)
+    return pattern.sub(text_to_change_to, current_text)
 
 os.mkdir("output")
 def zip_directory(folder_path, output_zipfile):
@@ -90,6 +100,7 @@ def zip_directory(folder_path, output_zipfile):
             for file in files:
                 file_path = os.path.join(root, file)
                 zipf.write(file_path, os.path.relpath(file_path, folder_path))
+
 for filename in files:
     vector_store = client.beta.vector_stores.create(name=filename)
 
@@ -126,11 +137,10 @@ for filename in files:
 
             for tool in data.required_action.submit_tool_outputs.tool_calls:
                 arg_json = json.loads(tool.function.arguments)
-                to_replace = arg_json["text_to_replace"]
-                replacement = arg_json["replacement_text"]
-
-                print(f"\nchanging \"{to_replace}\" -> \"{replacement}\"")
-                file_text = change_text(file_text, arg_json)
+                if tool.function.name == "change_name":
+                    file_text = change_name(file_text, arg_json)
+                elif tool.function.name == "change_text":
+                    file_text = change_text(file_text, arg_json)
 
             os.remove(temp_docx_directory)
 
@@ -174,7 +184,14 @@ for filename in files:
         messages=[
             {
                 "role": "user",
-                "content": input,
+                "content": f"""
+    Instructions:
+    - {input}
+    Goals
+    - perserve meaning if possible
+    - use Instructions to alter document thouroughly think it through
+    - If a name is changed it must be change throughout first and last name
+                """,
                 "attachments": [
                     {"file_id": message_file.id, "tools": [{"type": "file_search"}]}
                 ],
