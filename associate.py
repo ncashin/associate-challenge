@@ -140,7 +140,7 @@ for filename in files:
 
         def submit_tool_outputs(self, tool_outputs, run_id):
             # Use the submit_tool_outputs_stream helper
-           """ with client.beta.threads.runs.submit_tool_outputs_stream(
+           with client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,
             tool_outputs=tool_outputs,
@@ -148,7 +148,7 @@ for filename in files:
             ) as stream:
                 for text in stream.text_deltas:
                     print(text, end="", flush=True)
-                print()"""
+                print()
 
         @override
         def on_message_done(self, message) -> None:
