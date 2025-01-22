@@ -28,7 +28,7 @@ tools = [
                     },
                     "text_to_insert": {
                         "type": "string",
-                        "description": "text that will be inserted where text_to_replace i sfound",
+                        "description": "text that will be inserted where text_to_replace is found",
                     },
                 },
                 "required": ["text_to_replace", "text_to_insert"],
@@ -267,4 +267,4 @@ for filename in files:
 
     zip_directory(f"temp/{filename}", f"output/{filename}.docx")
 
-# shutil.rmtree("temp")
+shutil.rmtree("temp")
